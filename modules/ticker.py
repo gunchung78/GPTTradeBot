@@ -1,4 +1,5 @@
 import pyupbit
+import pandas as pd
 
 class Ticker:
     """업비트 암호화폐 티커와 관련된 기능 제공"""
@@ -9,15 +10,7 @@ class Ticker:
         :param fiat: 조회할 시장의 통화 (기본값: "KRW")
         """
         self.fiat = fiat
-        self.tickers = self._get_tickers_by_fiat(fiat)
-
-    @staticmethod
-    def _get_all_tickers():
-        """
-        업비트에서 지원하는 모든 티커를 가져옵니다.
-        :return: 티커 목록 (list)
-        """
-        return pyupbit.get_tickers()
+        self.tickers = pyupbit.get_tickers(fiat=fiat)
 
     @staticmethod
     def get_current_price(tickers):
@@ -28,20 +21,44 @@ class Ticker:
         """
         return pyupbit.get_current_price(tickers)
 
-    def _get_tickers_by_fiat(self, fiat):
+    @staticmethod
+    def get_ohlcv(ticker, interval="day", count=200):
         """
-        특정 시장(fiat)의 티커 목록을 가져옵니다.
-        :param fiat: 조회할 시장의 통화 (ex: "KRW", "BTC", "USDT")
-        :return: 해당 시장의 티커 목록 (list)
+        특정 티커의 OHLCV 데이터를 조회합니다.
+        :param ticker: 조회할 티커 (ex: "KRW-BTC")
+        :param interval: 캔들 간격 (default: "day")
+                         minute1, minute3, minute5, minute10, minute15,
+                         minute30, minute60, minute240, day, week, month
+        :param count: 조회할 데이터 개수 (default: 200)
+        :return: OHLCV 데이터 (pandas.DataFrame)
         """
-        return pyupbit.get_tickers(fiat=fiat)
+        try:
+            df = pyupbit.get_ohlcv(ticker, interval=interval, count=count)
+            if df is not None:
+                return df
+            else:
+                pass
+                return pd.DataFrame()
+        except Exception as e:
+            print(f"OHLCV 데이터 조회 실패 ({ticker}): {e}")
+            return pd.DataFrame()
 
-    def get_all_prices(self):
+    def get_valid_tickers(self, interval="day", count=200):
         """
-        현재 선택된 시장의 모든 티커에 대한 현재가를 조회합니다.
-        :return: 티커와 현재가의 딕셔너리 (dict)
+        OHLCV 데이터가 충분히 존재하는 유효한 티커 목록을 반환합니다.
+        :param interval: 캔들 간격 (default: "day")
+        :param count: 최소 데이터 개수 (default: 200)
+        :return: 유효한 티커 목록 (list)
         """
-        return self.get_current_price(self.tickers)
+        valid_tickers = []
+        for ticker in self.tickers:
+            try:
+                df = self.get_ohlcv(ticker, interval=interval, count=count)
+                if len(df) >= count:
+                    valid_tickers.append(ticker)
+            except Exception as e:
+                print(f"Error fetching data for {ticker}: {e}")
+        return valid_tickers
 
     def display_tickers(self):
         """
@@ -51,20 +68,33 @@ class Ticker:
         for ticker in self.tickers:
             print(ticker)
 
+    def get_all_prices(self):
+        """
+        현재 선택된 시장의 모든 티커에 대한 현재가를 조회합니다.
+        :return: 티커와 현재가의 딕셔너리 (dict)
+        """
+        return self.get_current_price(self.tickers)
 
-# 테스트용 코드
 if __name__ == "__main__":
-    ticker = Ticker(fiat="KRW")  # KRW 시장 티커만 조회
-    ticker.display_tickers()    # 티커 목록 출력
-    
-    # 특정 티커의 현재가 조회
-    btc_price = ticker.get_current_price("KRW-BTC")
-    print(f"현재 KRW-BTC 가격: {btc_price}")
+    ticker = Ticker(fiat="KRW")
 
-    # 여러 티커의 현재가 조회
-    prices = ticker.get_current_price(["KRW-BTC", "KRW-ETH"])
-    print("현재가 정보:", prices)
+    # # 1. 티커 목록 출력
+    # ticker.display_tickers()
 
-    # KRW 시장 모든 티커의 현재가 조회
-    all_prices = ticker.get_all_prices()
-    print("KRW 시장 모든 티커의 현재가:", all_prices)
+    # # 2. 특정 티커의 현재가 조회
+    # btc_price = ticker.get_current_price("KRW-BTC")
+    # print(f"현재 KRW-BTC 가격: {btc_price}")
+
+    # # 3. 모든 티커의 현재가 조회
+    # all_prices = ticker.get_all_prices()
+    # print("KRW 시장 모든 티커의 현재가:", all_prices)
+
+    # 4. 특정 티커의 OHLCV 데이터 조회
+    ohlcv_data = ticker.get_ohlcv("KRW-BTC", interval="day", count=5)
+    print("KRW-BTC OHLCV 데이터:")
+    print(ohlcv_data)
+
+    # 5. 유효한 티커 조회
+    valid_tickers = ticker.get_valid_tickers(interval="day", count=200)
+    print(f"200개의 데이터를 가진 유효한 티커 목록 ({len(valid_tickers)}개):")
+    print(valid_tickers)

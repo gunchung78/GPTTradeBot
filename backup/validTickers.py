@@ -80,13 +80,10 @@ def get_valid_tickers(fiat="KRW", interval="day", num=60):
             df = pyupbit.get_ohlcv(ticker, interval=interval, count=num)
             if df is not None and len(df) >= num:  # Check if data length meets the requirement
                 valid_tickers.append(ticker)
-                df['RSI'] = calculate_rsi(df)
-                today_rsi = df['RSI'].iloc[-1]
-                rsi.append(int(today_rsi))
         except Exception as e:
             print(f"Error fetching data for {ticker}: {e}")
     
-    return valid_tickers, rsi
+    return valid_tickers
 
 if __name__ == "__main__":
     valid_tickers, rsi = get_valid_tickers("KRW", "day", 60)
