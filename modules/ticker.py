@@ -35,30 +35,13 @@ class Ticker:
         try:
             df = pyupbit.get_ohlcv(ticker, interval=interval, count=count)
             if df is not None:
-                return df
+                return df.to_json()
             else:
                 pass
                 return pd.DataFrame()
         except Exception as e:
             print(f"OHLCV 데이터 조회 실패 ({ticker}): {e}")
             return pd.DataFrame()
-
-    def get_valid_tickers(self, interval="day", count=200):
-        """
-        OHLCV 데이터가 충분히 존재하는 유효한 티커 목록을 반환합니다.
-        :param interval: 캔들 간격 (default: "day")
-        :param count: 최소 데이터 개수 (default: 200)
-        :return: 유효한 티커 목록 (list)
-        """
-        valid_tickers = []
-        for ticker in self.tickers:
-            try:
-                df = self.get_ohlcv(ticker, interval=interval, count=count)
-                if len(df) >= count:
-                    valid_tickers.append(ticker)
-            except Exception as e:
-                print(f"Error fetching data for {ticker}: {e}")
-        return valid_tickers
 
     def display_tickers(self):
         """
@@ -94,7 +77,3 @@ if __name__ == "__main__":
     print("KRW-BTC OHLCV 데이터:")
     print(ohlcv_data)
 
-    # 5. 유효한 티커 조회
-    valid_tickers = ticker.get_valid_tickers(interval="day", count=200)
-    print(f"200개의 데이터를 가진 유효한 티커 목록 ({len(valid_tickers)}개):")
-    print(valid_tickers)
