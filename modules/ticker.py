@@ -35,7 +35,7 @@ class Ticker:
         try:
             df = pyupbit.get_ohlcv(ticker, interval=interval, count=count)
             if df is not None:
-                return df.to_json()
+                return df
             else:
                 pass
                 return pd.DataFrame()

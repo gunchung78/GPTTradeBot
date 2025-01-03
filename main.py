@@ -21,16 +21,16 @@ def main():
     try:
         access_key, secret_key = load_api_keys()
     except ValueError as ve:
-        print(ve)
+        print(ve) 
         return
 
     # Order 및 Ticker 객체 초기화
     order = Order(access_key=access_key, secret_key=secret_key)
     ticker = Ticker(fiat="KRW")  # 기본적으로 KRW 시장 티커 사용
     
-    # Test code
+    # Test Code
     ohlcv_data = ticker.get_ohlcv("KRW-BTC", interval="day", count=5)
-
+    
 
 if __name__ == "__main__":
     main()
